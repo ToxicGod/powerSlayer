@@ -1,19 +1,11 @@
 package org.powerbot.powerslayer;
 
-import org.powerbot.powerslayer.abstracts.State;
-import org.powerbot.powerslayer.common.MethodBase;
-import org.powerbot.powerslayer.data.SlayerMaster;
-import org.powerbot.powerslayer.states.BankingState;
-import org.powerbot.powerslayer.wrappers.*;
-import org.rsbot.event.listeners.PaintListener;
-import org.rsbot.script.Script;
-import org.rsbot.script.ScriptManifest;
-import org.rsbot.script.methods.Skills;
-import org.rsbot.script.wrappers.RSItem;
-import org.rsbot.script.wrappers.RSNPC;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -21,32 +13,51 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import org.powerbot.powerslayer.abstracts.State;
+import org.powerbot.powerslayer.common.MethodBase;
+import org.powerbot.powerslayer.data.SlayerMaster;
+import org.powerbot.powerslayer.states.BankingState;
+import org.powerbot.powerslayer.wrappers.EquipmentItems;
+import org.powerbot.powerslayer.wrappers.Finisher;
+import org.powerbot.powerslayer.wrappers.Requirements;
+import org.powerbot.powerslayer.wrappers.Rune;
+import org.powerbot.powerslayer.wrappers.SlayerItem;
+import org.powerbot.powerslayer.wrappers.Starter;
+import org.powerbot.powerslayer.wrappers.Task;
+import org.rsbot.event.listeners.PaintListener;
+import org.rsbot.script.Script;
+import org.rsbot.script.ScriptManifest;
+import org.rsbot.script.methods.*;
+import org.rsbot.script.wrappers.Item;
+import org.rsbot.script.wrappers.NPC;
+
+@SuppressWarnings("unused")
 @ScriptManifest(authors = {"Powerbot Scripters Team"}, name = "Power Slayer", version = 0.1, description = "Slayer bot.")
 public class PowerSlayer extends Script implements PaintListener, MouseListener {
-    public Task currentTask;
+	
+	public Task currentTask;
     public SlayerMaster slayerMaster;
     private int weaponSpecUsage = -1;
     private List<String> pickup = new ArrayList<String>();
-    public RSNPC currentMonster;
+    public NPC currentMonster;
     private int tab = 1;
     public Paint paint = new Paint();
     public MethodBase methodBase = null;
 
     @Override
-    public boolean onStart() {
+    public boolean onRun() {
         setMethodBase();
         return true;
     }
 
-    private int getKillsLeft() {
-        return settings.getSetting(394);
-    }
 
     private int inventSpace() {
-        return 28 - inventory.getCount();
+        return 28 - Inventory.getCount();
     }
 
-    private int specialUsage() {
+	private int specialUsage() {
         int[] amountUsage = {10, 25, 33, 35, 45, 50, 55, 60, 80, 85, 100};
         String[][] weapons = {
                 {"Rune thrownaxe", "Rod of ivandis"},
@@ -67,7 +78,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
                 {"Bandos Godsword", "Dragon Battleaxe", "Dragon Hatchet",
                         "Seercull Bow", "Excalibur", "Enhanced excalibur",
                         "Ancient Mace", "Saradomin sword"}};
-        String str = equipment.getItem(
+        String str = Equipment.getItem(
                 org.rsbot.script.methods.Equipment.WEAPON).getName();
         str = str.substring(str.indexOf(">") + 1);
         for (int i = 0; i < weapons.length; i++) {
@@ -81,23 +92,22 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     // TODO 90% of these need rewriting
-    public boolean performAction(Item items, String action) {
-        for (RSItem item : inventory.getItems()) {
+    public boolean performAction(SlayerItem items, String action) {
+        for (Item item : Inventory.getItems()) {
             for (String name : items.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
-                    return item.doAction(action);
+                    return item.interact(action);
                 }
             }
         }
         return false;
     }
 
-    public boolean isInInvent(Item items) {
-        for (RSItem item : inventory.getItems()) {
+    public boolean isInInvent(SlayerItem items) {
+        for (Item item : Inventory.getItems()) {
             for (String name : items.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
-                    if (inventory.getCount(true, item.getID()) >= items
-                            .getAmount())
+                    if (Inventory.getCount(true, item.getID()) >= items.getAmount())
                         return true;
                 }
             }
@@ -105,8 +115,8 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
         return false;
     }
 
-    public boolean isInBank(Item items) {
-        for (RSItem item : bank.getItems()) {
+    public boolean isInBank(SlayerItem items) {
+        for (Item item : Bank.getItems()) {
             for (String name : items.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -116,8 +126,8 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
         return false;
     }
 
-    public boolean isEquiped(Item item) {
-        for (RSItem i : equipment.getItems()) {
+    public boolean isEquipped(SlayerItem item) {
+        for (Item i : Equipment.getItems()) {
             for (String name : item.getNames()) {
                 if (i.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -128,7 +138,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInInvent(EquipmentItems equip) {
-        for (RSItem item : inventory.getItems()) {
+        for (Item item : Inventory.getItems()) {
             for (String name : equip.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -138,8 +148,8 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
         return false;
     }
 
-    public boolean isEquiped(EquipmentItems equip) {
-        for (RSItem item : equipment.getItems()) {
+    public boolean isEquipped(EquipmentItems equip) {
+        for (Item item : Equipment.getItems()) {
             for (String name : equip.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -150,7 +160,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInBank(EquipmentItems equip) {
-        for (RSItem item : bank.getItems()) {
+        for (Item item : Bank.getItems()) {
             for (String name : equip.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -161,23 +171,23 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public String willRemove(EquipmentItems equip) {
-        return equipment.getItem(equip.getSlot()).getName();
+        return Equipment.getItem(equip.getSlot()).getName();
     }
 
     public void equip(EquipmentItems equip) {
-        for (RSItem item : inventory.getItems()) {
+        for (Item item : Inventory.getItems()) {
             for (String name : equip.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
-                    item.doClick(true);
+                    item.click(true);
                     return;
                 }
             }
         }
     }
 
-    public boolean isFullyEquiped(Requirements req) {
+    public boolean isFullyEquipped(Requirements req) {
         for (EquipmentItems e : req.getEquipment()) {
-            if (!isEquiped(e)) {
+            if (!isEquipped(e)) {
                 if (isInInvent(e)) {
                     for (EquipmentItems r : req.getEquipment()) {
                         for (String name : r.getNames()) {
@@ -187,7 +197,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
                         }
                     }
                     equip(e);
-                    if (!isEquiped(e)) {
+                    if (!isEquipped(e)) {
                         return false;
                     }
                 }
@@ -197,7 +207,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean inventReady(Requirements req) {
-        for (Item i : req.getItems()) {
+        for (SlayerItem i : req.getItems()) {
             if (!isInInvent(i)) {
                 return false;
             }
@@ -206,7 +216,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInInvent(Finisher fin) {
-        for (RSItem item : inventory.getItems()) {
+        for (Item item : Inventory.getItems()) {
             for (String name : fin.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -217,7 +227,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInBank(Finisher fin) {
-        for (RSItem item : bank.getItems()) {
+        for (Item item : Bank.getItems()) {
             for (String name : fin.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -228,7 +238,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInInvent(Starter start) {
-        for (RSItem item : inventory.getItems()) {
+        for (Item item : Inventory.getItems()) {
             for (String name : start.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -239,7 +249,7 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
     }
 
     public boolean isInBank(Starter start) {
-        for (RSItem item : bank.getItems()) {
+        for (Item item : Bank.getItems()) {
             for (String name : start.getNames()) {
                 if (item.getName().equalsIgnoreCase(name)) {
                     return true;
@@ -249,45 +259,9 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
         return false;
     }
 
-    public boolean use(Starter start, RSNPC monster) {
-        for (String s : start.getNames()) {
-            for (RSItem inventItem : inventory.getItems()) {
-                if (s.equalsIgnoreCase(inventItem.getName())) {
-                    if (inventory.selectItem(inventItem.getID())) {
-                        if (monster != null) {
-                            if (!monster.isOnScreen()) {
-                                camera.turnTo(monster);
-                            }
-                            if (monster.isOnScreen()) {
-                                return monster.doAction("Use");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
 
-    public boolean use(Finisher finisher, RSNPC monster) {
-        for (String s : finisher.getNames()) {
-            for (RSItem inventItem : inventory.getItems()) {
-                if (s.equalsIgnoreCase(inventItem.getName())) {
-                    if (inventory.selectItem(inventItem.getID())) {
-                        if (monster != null) {
-                            if (!monster.isOnScreen()) {
-                                camera.turnTo(monster);
-                            }
-                            if (monster.isOnScreen()) {
-                                return monster.doAction("Use");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
+
+
 
     // A mix of teleporting and walking/running to travel
     // to certain slayer masters, tasks, and banks
@@ -369,21 +343,21 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
             g.drawRect(x, y, 150, 15);
             g.setColor(new Color(0, 0, 0, 80));
             g.fillRect(x, y,
-                    (int) (skills.getPercentToNextLevel(s.skillID) * 1.5), 15);
+                    (int) (Skills.getPercentToLevel(s.skillID) * 1.5), 15);
             g.setColor(new Color(90, 15, 15));
             g.setFont(new Font("Serif", 0, 12));
             g.drawString(
                     s.skillName + ": "
-                            + skills.getPercentToNextLevel(s.skillID)
+                            + Skills.getPercentToLevel(s.skillID)
                             + "% to level "
-                            + (skills.getRealLevel(s.skillID) + 1), x + 4,
+                            + (Skills.getAbsoluteLevel(s.skillID) + 1), x + 4,
                     y + 12);
             g.setColor(new Color(255, 255, 255, 90));
             g.drawString(
                     s.skillName + ": "
-                            + skills.getPercentToNextLevel(s.skillID)
+                            + Skills.getPercentToLevel(s.skillID)
                             + "% to level "
-                            + (skills.getRealLevel(s.skillID) + 1), x + 5,
+                            + (Skills.getAbsoluteLevel(s.skillID) + 1), x + 5,
                     y + 13);
         }
     }
@@ -427,13 +401,13 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
      */
     public int getRuneCount(Rune rune) {
         if (rune.isElemental()) {
-            String wepName = equipment
-                    .getItem(org.rsbot.script.methods.Equipment.WEAPON) != null ? equipment
+            String wepName = Equipment
+                    .getItem(org.rsbot.script.methods.Equipment.WEAPON) != null ? Equipment
                     .getItem(org.rsbot.script.methods.Equipment.WEAPON)
                     .getName() : "";
             if (rune == Rune.WATER) {
-                String shieldName = equipment
-                        .getItem(org.rsbot.script.methods.Equipment.SHIELD) != null ? equipment
+                String shieldName = Equipment
+                        .getItem(org.rsbot.script.methods.Equipment.SHIELD) != null ? Equipment
                         .getItem(org.rsbot.script.methods.Equipment.SHIELD)
                         .getName() : "";
                 if (shieldName != null
@@ -454,41 +428,45 @@ public class PowerSlayer extends Script implements PaintListener, MouseListener 
                     return 999999;
             }
         }
-        return inventory.getCount(true, rune.getItemIDs());
+        return Inventory.getCount(true, rune.getItemIDs());
     }
 
     public void setMethodBase() {
         if (methodBase == null)
             methodBase = new MethodBase(this);
-        methodBase.equipment = equipment;
-        methodBase.combat = combat;
-        methodBase.walking = walking;
-        methodBase.grandExchange = grandExchange;
-        methodBase.account = account;
-        methodBase.bank = bank;
-        methodBase.calc = calc;
-        methodBase.camera = camera;
-        methodBase.clanChat = clanChat;
-        methodBase.env = env;
-        methodBase.friendChat = friendChat;
-        methodBase.groundItems = groundItems;
-        methodBase.hiscores = hiscores;
-        methodBase.interfaces = interfaces;
-        methodBase.inventory = inventory;
-        methodBase.keyboard = keyboard;
-        methodBase.magic = magic;
-        methodBase.menu = menu;
-        methodBase.mouse = mouse;
-        methodBase.npcs = npcs;
-        methodBase.objects = objects;
-        methodBase.players = players;
-        methodBase.prayer = prayer;
-        methodBase.settings = settings;
-        methodBase.skills = skills;
-        methodBase.store = store;
-        methodBase.summoning = summoning;
-        methodBase.tiles = tiles;
-        methodBase.trade = trade;
-        methodBase.web = web;
+        methodBase.account = new Account();
+        methodBase.bank = new Bank();
+        methodBase.calculations = new Calculations();
+        methodBase.camera = new Camera();
+        methodBase.clanChat = new ClanChat();
+        methodBase.combat = new Combat();
+        methodBase.environment = new Environment();
+        methodBase.equipment = new Equipment();
+        methodBase.friendChat = new FriendChat();
+        methodBase.game = new Game();
+        methodBase.grandExchange = new GrandExchange();
+        methodBase.groundItems = new GroundItems();
+        methodBase.hiscores = new Hiscores();
+        methodBase.interfaces = new Interfaces();
+        methodBase.inventory = new Inventory();
+        methodBase.keyboard = new Keyboard();
+        methodBase.lobby = new Lobby();
+        methodBase.magic = new Magic();
+        methodBase.menu = new Menu();
+        methodBase.mouse = new Mouse();
+        methodBase.npcs = new NPCs();
+        methodBase.objects = new Objects();
+        methodBase.players = new Players();
+        methodBase.prayer = new Prayer();
+        methodBase.projectiles = new Projectiles();
+        methodBase.quests = new Quests();
+        methodBase.settings = new Settings();
+        methodBase.skills = new Skills();
+        methodBase.store = new Store();
+        methodBase.summoning = new Summoning();
+        methodBase.tiles = new Tiles();
+        methodBase.trade = new Trade();
+        methodBase.walking = new Walking();
+        methodBase.web = new Web();
     }
 }
