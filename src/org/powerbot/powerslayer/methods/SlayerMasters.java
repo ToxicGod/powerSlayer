@@ -2,17 +2,19 @@ package org.powerbot.powerslayer.methods;
 
 import org.powerbot.powerslayer.common.DMethodProvider;
 import org.powerbot.powerslayer.common.MethodBase;
-import org.powerbot.powerslayer.data.Monster;
+import org.powerbot.powerslayer.data.Monsters;
+import org.powerbot.powerslayer.data.Monsters.Monster;
 import org.powerbot.powerslayer.data.SlayerMaster;
 import org.powerbot.powerslayer.wrappers.Task;
-import org.rsbot.script.methods.Interfaces;
 import org.rsbot.script.methods.NPCs;
 import org.rsbot.script.methods.Players;
 import org.rsbot.script.methods.Skills;
+import org.rsbot.script.methods.ui.Interfaces;
 import org.rsbot.script.wrappers.NPC;
 
 import java.util.ArrayList;
 
+//TODO: Peer review code
 public class SlayerMasters extends DMethodProvider {
 	public SlayerMasters(MethodBase methods) {
 		super(methods);
@@ -22,7 +24,7 @@ public class SlayerMasters extends DMethodProvider {
 		ArrayList<SlayerMaster> possibleMasters = new ArrayList<SlayerMaster>();
 		for(SlayerMaster master : SlayerMaster.values()) {
 			if(master.getSlayerLevel() < Skills.getLevel(Skills.SLAYER) &&
-					master.getCombatLevel() < Players.getMyPlayer().getCombatLevel()) {
+					master.getCombatLevel() < Players.getLocal().getCombatLevel()) {
 				possibleMasters.add(master);
 			}
 		}
@@ -86,6 +88,16 @@ public class SlayerMasters extends DMethodProvider {
 								for(String name : mon.getNames()) {
 									if(words[1].equals(name)) {
 										monster = mon;
+										break;
+									}
+								}
+								if(monster != null)
+									break;
+							}
+							if(monster == null) {
+								for(Monsters.MonsterGroup mg : Monsters.MonsterGroup.values()) {
+									if(mg.toString().equals(words[1])) {
+										monster = mg.getBestMonster();
 									}
 								}
 							}

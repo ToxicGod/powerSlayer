@@ -17,21 +17,12 @@ public abstract class DMethodProvider {
 
     public DMethodProvider(MethodBase methods) {
         this.methods = methods;
-        log = Logger
-                .getLogger((methods != null && methods.parent != null ? methods.parent
-                        .getClass().getName() + "-"
-                        : "")
-                        + getClass().getName());
+        log = Logger.getLogger(((methods != null && methods.parent != null) ?
+		        methods.parent.getClass().getName() + "-" : "") + getClass().getName());
     }
 
-    /**
-     * Returns the current client's local player.
-     *
-     * @return The current client's <tt>RSPlayer</tt>.
-     * @see Players#getMyPlayer()
-     */
     public Player getMyPlayer() {
-        return Players.getMyPlayer();
+        return Players.getLocal();
     }
 
     /**
@@ -45,6 +36,19 @@ public abstract class DMethodProvider {
     public int random(int min, int max) {
         int n = Math.abs(max - min);
         return Math.min(min, max) + (n == 0 ? 0 : methods.random.nextInt(n));
+    }
+
+    /**
+     * Returns a random double with min as the inclusive lower bound and max as
+     * the exclusive upper bound.
+     *
+     * @param min The inclusive lower bound.
+     * @param max The exclusive upper bound.
+     * @return Random double min <= n < max.
+     */
+    public double random(double min, double max) {
+        return Math.min(min, max) + methods.random.nextDouble()
+                * Math.abs(max - min);
     }
 
     /**
@@ -85,19 +89,6 @@ public abstract class DMethodProvider {
      */
     public boolean verify(GroundItem i) {
         return i != null;
-    }
-
-    /**
-     * Returns a random double with min as the inclusive lower bound and max as
-     * the exclusive upper bound.
-     *
-     * @param min The inclusive lower bound.
-     * @param max The exclusive upper bound.
-     * @return Random double min <= n < max.
-     */
-    public double random(double min, double max) {
-        return Math.min(min, max) + methods.random.nextDouble()
-                * Math.abs(max - min);
     }
 
     /**

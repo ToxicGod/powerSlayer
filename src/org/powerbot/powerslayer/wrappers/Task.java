@@ -1,6 +1,6 @@
 package org.powerbot.powerslayer.wrappers;
 
-import org.powerbot.powerslayer.data.Monster;
+import org.powerbot.powerslayer.data.Monsters.Monster;
 import org.powerbot.powerslayer.data.SlayerMaster;
 
 public class Task {
@@ -13,13 +13,21 @@ public class Task {
 	    this.amount = amount;
 	    this.master = master;
     }
-
-    public Requirements getRequirements() {
-	    //TODO: Convert over to both locationProfile and monster requirements
-        return monster.getRequirements();
+    
+    public int getAmount() {
+    	return amount;
+    }
+    
+    public SlayerMaster getMaster() {
+    	return master;
     }
 
     public Monster getMonster() {
         return monster;
+    }
+
+    public Requirements getRequirements() {
+	    //TODO: Convert over to both locationProfile and monster requirements
+        return monster.getRequirements();
     }
 }
